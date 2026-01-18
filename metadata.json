@@ -1,0 +1,7 @@
+{
+  "name": "Money Brain Ultimate",
+  "description": "A premium, AI-powered personal finance operating system with behavioral analytics and predictive simulation.",
+  "requestFramePermissions": [
+    "microphone"
+  ]
+}
