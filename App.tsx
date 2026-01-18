@@ -182,8 +182,12 @@ const App = () => {
       case 'categories':
         return <Categories 
            categories={categories}
+           transactions={transactions}
+           accounts={accounts}
+           currency={settings.currency}
            onAdd={openAddCategory}
            onEdit={openEditCategory}
+           onEditTransaction={openEditTransaction}
         />;
 
       case 'analytics':
