@@ -1,19 +1,34 @@
 import React from 'react';
-import { ArrowUpRight, ArrowDownRight, Activity, Eye, EyeOff, Search, BrainCircuit } from 'lucide-react';
-import { Transaction, AppSettings } from '../types';
+import { ArrowUpRight, ArrowDownRight, Activity, Eye, EyeOff, Search, BrainCircuit, Pencil, HelpCircle } from 'lucide-react';
+import { Transaction, AppSettings, Account, CategoryItem } from '../types';
 import { formatCurrency } from '../services/storage';
-import { CATEGORIES } from '../constants';
+import { ICON_MAP } from '../constants';
 
 interface DashboardProps {
   transactions: Transaction[];
+  accounts: Account[];
+  categories: CategoryItem[];
   settings: AppSettings;
   onTogglePrivacy: () => void;
+  onEditTransaction: (tx: Transaction) => void;
 }
 
-const Dashboard: React.FC<DashboardProps> = ({ transactions, settings, onTogglePrivacy }) => {
+const Dashboard: React.FC<DashboardProps> = ({ transactions, accounts, categories, settings, onTogglePrivacy, onEditTransaction }) => {
   const income = transactions.filter(t => t.type === 'income').reduce((a, c) => a + c.amount, 0);
   const expense = transactions.filter(t => t.type === 'expense').reduce((a, c) => a + c.amount, 0);
-  const balance = income - expense;
+  
+  // Calculate Total Net Worth (Sum of all account balances)
+  const totalBalance = accounts.reduce((total, acc) => {
+     const accTx = transactions.filter(t => t.accountId === acc.id || t.toAccountId === acc.id);
+     const accBal = accTx.reduce((bal, t) => {
+        if (t.accountId === acc.id) {
+           return t.type === 'income' ? bal + t.amount : bal - t.amount;
+        }
+        if (t.toAccountId === acc.id && t.type === 'transfer') return bal + t.amount;
+        return bal;
+     }, acc.initialBalance);
+     return total + accBal;
+  }, 0);
   
   // Calculate Score
   const savingsRate = income > 0 ? ((income - expense) / income) * 100 : 0;
@@ -41,9 +56,9 @@ const Dashboard: React.FC<DashboardProps> = ({ transactions, settings, onToggleP
         <div className="md:col-span-2 bg-gradient-to-br from-elevated to-surface border border-gray-800 p-6 rounded-2xl relative overflow-hidden group">
           <div className="absolute top-0 right-0 w-32 h-32 bg-primary/10 rounded-full blur-3xl group-hover:bg-primary/20 transition-all duration-500"></div>
           <div className="relative z-10">
-            <span className="text-gray-400 text-sm font-medium">Total Balance</span>
+            <span className="text-gray-400 text-sm font-medium">Total Net Worth</span>
             <div className="text-4xl font-bold mt-2 text-white">
-              {formatCurrency(balance, settings.currency, settings.privacyMode)}
+              {formatCurrency(totalBalance, settings.currency, settings.privacyMode)}
             </div>
             <div className="flex gap-6 mt-6">
               <div className="flex items-center gap-2 text-success">
@@ -72,15 +87,17 @@ const Dashboard: React.FC<DashboardProps> = ({ transactions, settings, onToggleP
         </div>
       </div>
 
-      {/* AI Insight Pill */}
-      <div className="bg-accent/10 border border-accent/20 p-4 rounded-xl flex items-start gap-3">
-        <BrainCircuit size={24} className="text-accent shrink-0 mt-1" />
-        <div>
-          <h3 className="text-accent font-bold text-sm">AI Insight</h3>
-          <p className="text-sm text-gray-300 leading-relaxed">
-            Spending on <span className="text-white font-semibold">Dining</span> is 15% higher than last week. Consider cooking at home this weekend to boost your savings rate.
-          </p>
-        </div>
+      {/* Wallet Strip */}
+      <div className="flex gap-4 overflow-x-auto pb-4 no-scrollbar">
+         {accounts.map(acc => (
+            <div key={acc.id} className="min-w-[150px] p-4 rounded-xl bg-elevated border border-gray-800 flex flex-col justify-between h-24 relative overflow-hidden">
+               <div className="absolute right-0 top-0 w-16 h-16 bg-white/5 rounded-full -mr-8 -mt-8 pointer-events-none"></div>
+               <span className="text-xs text-gray-400 font-bold z-10 relative">{acc.name}</span>
+               <div className="w-full h-1 bg-gray-700 rounded-full mt-2 mb-auto relative z-10">
+                  <div className="h-full rounded-full" style={{ background: acc.color, width: '60%' }}></div>
+               </div>
+            </div>
+         ))}
       </div>
 
       {/* Recent Transactions */}
@@ -99,23 +116,38 @@ const Dashboard: React.FC<DashboardProps> = ({ transactions, settings, onToggleP
         
         <div className="space-y-3">
           {transactions.slice(0, 5).map(tx => {
-            const catInfo = CATEGORIES.find(c => c.id === tx.category) || CATEGORIES[0];
+            const catInfo = categories.find(c => c.id === tx.category) || categories[0];
+            const accountName = accounts.find(a => a.id === tx.accountId)?.name || 'Unknown';
+            
             return (
               <div key={tx.id} className="bg-surface hover:bg-elevated transition-colors p-4 rounded-xl flex items-center justify-between group">
                 <div className="flex items-center gap-4">
                   <div 
                     className="w-10 h-10 rounded-full flex items-center justify-center text-black"
-                    style={{ backgroundColor: catInfo.color }}
+                    style={{ backgroundColor: catInfo?.color || '#333' }}
                   >
-                    {catInfo.icon}
+                    {catInfo ? (ICON_MAP[catInfo.icon] || <HelpCircle size={18}/>) : <HelpCircle size={18}/>}
                   </div>
                   <div>
-                    <div className="font-bold text-white group-hover:text-primary transition-colors">{tx.desc}</div>
-                    <div className="text-xs text-gray-500">{new Date(tx.date).toLocaleDateString()} • {catInfo.label}</div>
+                    <div className="font-bold text-white group-hover:text-primary transition-colors flex items-center gap-2">
+                       {tx.desc}
+                       {tx.type === 'transfer' && <span className="text-[10px] bg-primary/20 text-primary px-2 rounded-full">Transfer</span>}
+                    </div>
+                    <div className="text-xs text-gray-500">
+                       {new Date(tx.date).toLocaleDateString()} • <span className="text-gray-400">{accountName}</span>
+                    </div>
                   </div>
                 </div>
-                <div className={`font-bold ${tx.type === 'income' ? 'text-success' : 'text-white'}`}>
-                  {tx.type === 'income' ? '+' : '-'}{formatCurrency(tx.amount, settings.currency, settings.privacyMode)}
+                <div className="flex items-center gap-4">
+                   <div className={`font-bold ${tx.type === 'income' ? 'text-success' : tx.type === 'transfer' ? 'text-white' : 'text-white'}`}>
+                     {tx.type === 'income' ? '+' : tx.type === 'transfer' ? '' : '-'}{formatCurrency(tx.amount, settings.currency, settings.privacyMode)}
+                   </div>
+                   <button 
+                      onClick={() => onEditTransaction(tx)}
+                      className="p-2 text-gray-600 hover:text-white hover:bg-white/10 rounded-full transition-colors opacity-0 group-hover:opacity-100"
+                   >
+                      <Pencil size={16} />
+                   </button>
                 </div>
               </div>
             );

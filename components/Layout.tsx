@@ -1,7 +1,7 @@
 import React from 'react';
 import { 
   LayoutDashboard, PieChart, Target, Settings, Plus, 
-  BrainCircuit, Wallet, LogOut 
+  BrainCircuit, Wallet, LogOut, CreditCard, Layers
 } from 'lucide-react';
 
 interface LayoutProps {
@@ -15,7 +15,9 @@ interface LayoutProps {
 const Layout: React.FC<LayoutProps> = ({ children, activeTab, onTabChange, onOpenAdd, onLock }) => {
   const navItems = [
     { id: 'dashboard', icon: <LayoutDashboard size={20} />, label: 'Overview' },
+    { id: 'wallets', icon: <CreditCard size={20} />, label: 'Wallets' },
     { id: 'analytics', icon: <PieChart size={20} />, label: 'Analytics' },
+    { id: 'categories', icon: <Layers size={20} />, label: 'Categories' },
     { id: 'simulator', icon: <BrainCircuit size={20} />, label: 'AI Simulator' },
     { id: 'goals', icon: <Target size={20} />, label: 'Goals' },
     { id: 'settings', icon: <Settings size={20} />, label: 'Settings' },

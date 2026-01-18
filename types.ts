@@ -1,6 +1,23 @@
-export type TransactionType = 'income' | 'expense';
+export type TransactionType = 'income' | 'expense' | 'transfer';
 export type MoodType = 'happy' | 'neutral' | 'stressed' | 'impulsive';
-export type Category = 'food' | 'transport' | 'bills' | 'entertainment' | 'shopping' | 'health' | 'work' | 'education' | 'investment';
+export type Category = string; // Changed from union type to string to support dynamic categories
+
+export interface CategoryItem {
+  id: string;
+  label: string;
+  icon: string; // The key name of the icon in the icon map
+  color: string;
+  type: 'expense' | 'income' | 'both'; // Optional, for future filtering
+}
+
+export interface Account {
+  id: string;
+  name: string;
+  type: 'bank' | 'cash' | 'card';
+  color: string;
+  initialBalance: number;
+  currency: string;
+}
 
 export interface Transaction {
   id: string;
@@ -11,6 +28,8 @@ export interface Transaction {
   mood: MoodType;
   date: string; // ISO string
   isRecurring?: boolean;
+  accountId: string; // The account money comes from (or goes to for income)
+  toAccountId?: string; // For transfers: the destination account
 }
 
 export interface SavingsGoal {

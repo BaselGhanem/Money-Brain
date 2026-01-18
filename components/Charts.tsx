@@ -3,20 +3,18 @@ import {
   PieChart, Pie, Cell, ResponsiveContainer, BarChart, 
   Bar, XAxis, YAxis, Tooltip, Legend, AreaChart, Area 
 } from 'recharts';
-import { Transaction } from '../types';
-import { CATEGORIES } from '../constants';
+import { Transaction, CategoryItem } from '../types';
 
 interface ChartProps {
   transactions: Transaction[];
+  categories?: CategoryItem[];
   theme: 'dark' | 'light';
 }
 
-const COLORS = CATEGORIES.map(c => c.color);
-
-export const CategoryChart: React.FC<ChartProps> = ({ transactions }) => {
+export const CategoryChart: React.FC<ChartProps> = ({ transactions, categories = [] }) => {
   const expenses = transactions.filter(t => t.type === 'expense');
   
-  const data = CATEGORIES.map(cat => {
+  const data = categories.map(cat => {
     const total = expenses
       .filter(t => t.category === cat.id)
       .reduce((acc, curr) => acc + curr.amount, 0);
