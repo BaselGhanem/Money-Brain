@@ -1,6 +1,6 @@
 {
   "name": "Money Brain Ultimate",
-  "description": "A premium, AI-powered personal finance operating system with behavioral analytics and predictive simulation.",
+  "description": "A premium, AI-powered personal finance operating system.",
   "requestFramePermissions": [
     "microphone"
   ]
